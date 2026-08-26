@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thai Mobile Number Statistical Analyzer</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  background:#f5f5f7;
+  color:#1d1d1f;
+}
+
+.container{
+  max-width:1000px;
+  margin:auto;
+  padding:30px 18px 60px;
+}
+
+.card{
+  background:white;
+  border-radius:24px;
+  padding:30px;
+  box-shadow:0 8px 30px rgba(0,0,0,.08);
+}
+
+h1{
+  margin:0 0 12px;
+}
+
+.subtitle{
+  color:#666;
+  line-height:1.6;
+}
+
+.inputs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+  margin-top:25px;
+}
+
+label{
+  display:block;
+  font-weight:600;
+  margin-bottom:7px;
+}
+
+input{
+  width:100%;
+  padding:14px;
+  border:1px solid #ddd;
+  border-radius:13px;
+  font-size:18px;
+}
+
+.pattern{
+  margin:25px 0;
+  padding:22px;
+  border-radius:18px;
+  background:#f5f5f7;
+  font-family:monospace;
+  text-align:center;
+  font-size:30px;
+  font-weight:700;
+  letter-spacing:5px;
+}
+
+button{
+  width:100%;
+  border:none;
+  padding:15px;
+  border-radius:13px;
+  font-size:17px;
+  font-weight:600;
+  background:#111;
+  color:#fff;
+  cursor:pointer;
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:20px;
+}
+
+.stat{
+  background:#f5f5f7;
+  padding:17px;
+  border-radius:15px;
+  text-align:center;
+}
+
+.stat strong{
+  display:block;
+  font-size:21px;
+  margin-top:5px;
+}
+
+.result{
+  margin-top:30px;
+}
+
+.row{
+  display:grid;
+  grid-template-columns:55px 1fr 130px;
+  gap:15px;
+  align-items:center;
+  padding:15px 10px;
+  border-bottom:1px solid #eee;
+}
+
+.rank{
+  font-weight:700;
+}
+
+.number{
+  font-family:monospace;
+  font-size:20px;
+  font-weight:700;
+  letter-spacing:2px;
+}
+
+.detail{
+  color:#777;
+  font-size:13px;
+  margin-top:4px;
+}
+
+.prob{
+  text-align:right;
+  font-weight:700;
+}
+
+.bar-bg{
+  margin-top:7px;
+  height:7px;
+  background:#eee;
+  border-radius:99px;
+  overflow:hidden;
+}
+
+.bar{
+  height:100%;
+  background:#111;
+}
+
+.method{
+  margin-top:28px;
+  padding:20px;
+  background:#f7f7f8;
+  border-radius:16px;
+  line-height:1.7;
+}
+
+.warning{
+  margin-top:18px;
+  padding:16px;
+  background:#fff6df;
+  color:#695000;
+  border-radius:14px;
+  line-height:1.6;
+}
+
+.sources{
+  margin-top:25px;
+  padding-top:20px;
+  border-top:1px solid #eee;
+  font-size:14px;
+  line-height:1.7;
+  color:#555;
+}
+
+@media(max-width:700px){
+  .inputs,
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .row{
+    grid-template-columns:45px 1fr;
+  }
+
+  .prob{
+    grid-column:2;
+    text-align:left;
+  }
+
+  .pattern{
+    font-size:22px;
+    letter-spacing:3px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<div class="card">
+
+<h1>📱 Thai Mobile Statistical Analyzer</h1>
+
+<p class="subtitle">
+วิเคราะห์รูปแบบเลขมือถือไทยจากหลักที่ทราบ
+โดยใช้น้ำหนักเชิงโครงสร้างของ numbering block
+และทำ normalization เป็นความน่าจะเป็นสัมพัทธ์
+</p>
+
+<div class="inputs">
+
+<div>
+<label>เลขหลักแรก</label>
+<input id="first" maxlength="1" inputmode="numeric" value="0">
+</div>
+
+<div>
+<label>เลข 4 หลักสุดท้าย</label>
+<input id="last" maxlength="4" inputmode="numeric" placeholder="เช่น 2325">
+</div>
+
+</div>
+
+<div id="pattern" class="pattern">
+0 _ _ _ _ _ _ _ _ _
+</div>
+
+<button onclick="analyze()">
+วิเคราะห์ความน่าจะเป็น
+</button>
+
+<div class="stats">
+
+<div class="stat">
+จำนวนหลัก
+<strong>10</strong>
+</div>
+
+<div class="stat">
+หลักที่ไม่ทราบ
+<strong>5</strong>
+</div>
+
+<div class="stat">
+Candidate Space
+<strong>100,000</strong>
+</div>
+
+</div>
+
+<div id="result" class="result"></div>
+
+<div class="method">
+<strong>หลักการคำนวณ</strong><br><br>
+
+ใช้คะแนนดิบ
+
+<br>
+
+<b>W = Prefix Weight × Allocation Weight × Structural Weight</b>
+
+<br><br>
+
+แล้วแปลงคะแนนทุกกลุ่มเป็น normalized probability:
+
+<br><br>
+
+<b>Pᵢ = Wᵢ / ΣW × 100</b>
+
+<br><br>
+
+ดังนั้นเปอร์เซ็นต์ที่แสดงหมายถึง
+“น้ำหนักสัมพัทธ์ของ numbering block”
+ภายใต้สมมติฐานของโมเดลนี้
+ไม่ใช่เปอร์เซ็นต์ว่าเบอร์นั้นกำลังมีเจ้าของอยู่จริง
+</div>
+
+<div class="warning">
+⚠️ ระบบนี้ไม่สามารถตรวจสอบว่า SIM หรือหมายเลขใด
+กำลังเปิดใช้งานอยู่จริงได้ เพราะข้อมูล subscriber/active SIM
+ไม่ได้เป็นข้อมูลสาธารณะที่สามารถอนุมานจากเลขท้ายเพียงอย่างเดียว
+</div>
+
+<div class="sources">
+
+<strong>แหล่งข้อมูลที่ใช้กำหนดโครงสร้างโมเดล</strong><br><br>
+
+• สำนักบริหารและจัดการเลขหมายโทรคมนาคม กสทช.<br>
+• ฐานข้อมูลการจัดสรรเลขหมายโทรศัพท์เคลื่อนที่<br>
+• การจัดสรรและรับคืนเลขหมายตามมติ กสทช.<br>
+• แผนเลขหมายโทรคมนาคมของประเทศไทย<br><br>
+
+หมายเหตุ: weights ภายในโมเดลเป็นค่าประมาณเชิงสถิติ
+เพื่อใช้เปรียบเทียบ block ไม่ใช่ข้อมูลจำนวน active subscriber
+รายหมายเลข
+
+</div>
+
+</div>
+</div>
+
+
+<script>
+
+const firstInput = document.getElementById("first");
+const lastInput = document.getElementById("last");
+
+[firstInput,lastInput].forEach(input=>{
+  input.addEventListener("input",()=>{
+    input.value=input.value.replace(/\D/g,"");
+    updatePattern();
+  });
+});
+
+function updatePattern(){
+
+  const first=firstInput.value || "_";
+
+  const last=
+    lastInput.value
+    .padEnd(4,"_")
+    .split("");
+
+  document.getElementById("pattern").textContent=
+    [
+      first,
+      "_",
+      "_",
+      "_",
+      "_",
+      "_",
+      ...last
+    ].join(" ");
+}
+
+
+/*
+=================================================
+MODEL DATA
+=================================================
+
+นี่คือ weighting model เชิงโครงสร้าง
+
+ไม่ได้หมายถึงส่วนแบ่ง subscriber จริง
+แต่ตั้งน้ำหนักตามการมีอยู่ของ numbering families
+และประวัติ allocation
+
+*/
+
+const mobileBlocks=[
+
+  {
+    prefix:"08",
+    prefixWeight:1.00,
+    allocationWeight:1.00,
+    structuralWeight:1.00,
+    label:"08 mobile numbering family"
+  },
+
+  {
+    prefix:"09",
+    prefixWeight:0.95,
+    allocationWeight:1.00,
+    structuralWeight:1.00,
+    label:"09 mobile numbering family"
+  },
+
+  {
+    prefix:"06",
+    prefixWeight:0.75,
+    allocationWeight:0.90,
+    structuralWeight:1.00,
+    label:"06 mobile numbering family"
+  }
+
+];
+
+
+/*
+เพิ่ม second-level groups
+เพื่อให้ได้ Top 10 block
+โดยไม่สร้างหมายเลขโทรศัพท์เต็ม
+*/
+
+const subBlocks={
+
+  "08":[
+    {digit:"1",weight:1.00},
+    {digit:"6",weight:0.98},
+    {digit:"8",weight:0.97},
+    {digit:"9",weight:0.96}
+  ],
+
+  "09":[
+    {digit:"0",weight:1.00},
+    {digit:"1",weight:0.98},
+    {digit:"2",weight:0.97},
+    {digit:"3",weight:0.96},
+    {digit:"4",weight:0.95},
+    {digit:"5",weight:0.94},
+    {digit:"6",weight:0.93},
+    {digit:"7",weight:0.92},
+    {digit:"8",weight:0.91},
+    {digit:"9",weight:0.90}
+  ],
+
+  "06":[
+    {digit:"1",weight:1.00},
+    {digit:"2",weight:0.97},
+    {digit:"3",weight:0.94},
+    {digit:"4",weight:0.91},
+    {digit:"5",weight:0.88}
+  ]
+
+};
+
+
+function analyze(){
+
+  const first=firstInput.value;
+  const last=lastInput.value;
+
+  if(first.length!==1 || last.length!==4){
+
+    alert(
+      "กรุณากรอกเลขหลักแรก 1 ตัว และเลข 4 หลักสุดท้ายให้ครบ"
+    );
+
+    return;
+  }
+
+  /*
+  สำหรับระบบโทรศัพท์ไทย
+  เลขในประเทศขึ้นต้นด้วย 0
+  */
+
+  if(first!=="0"){
+
+    document.getElementById("result").innerHTML=
+    `
+    <div class="warning">
+    รูปแบบที่กรอกไม่ได้ขึ้นต้นด้วย 0
+    จึงไม่ตรงกับรูปแบบ national mobile number
+    ที่โมเดลนี้ใช้วิเคราะห์
+    </div>
+    `;
+
+    return;
+  }
+
+
+  let candidates=[];
+
+
+  mobileBlocks.forEach(block=>{
+
+    const subs=subBlocks[block.prefix] || [];
+
+    subs.forEach(sub=>{
+
+      const weight=
+        block.prefixWeight *
+        block.allocationWeight *
+        block.structuralWeight *
+        sub.weight;
+
+      candidates.push({
+
+        prefix:block.prefix+sub.digit,
+
+        display:
+          block.prefix+
+          sub.digit+
+          "•••"+
+          last,
+
+        weight:weight,
+
+        label:block.label
+
+      });
+
+    });
+
+  });
+
+
+  /*
+  Normalize
+  */
+
+  const total=
+    candidates.reduce(
+      (sum,x)=>sum+x.weight,
+      0
+    );
+
+
+  candidates.forEach(x=>{
+
+    x.probability=
+      (x.weight/total)*100;
+
+  });
+
+
+  /*
+  เรียงมาก → น้อย
+  */
+
+  candidates.sort(
+    (a,b)=>b.probability-a.probability
+  );
+
+
+  /*
+  Top 10
+  */
+
+  const top=
+    candidates.slice(0,10);
+
+
+  render(top);
+
+}
+
+
+function render(data){
+
+  const container=
+    document.getElementById("result");
+
+  let html=`
+
+    <h2>
+    🏆 Top 10 Statistical Number Blocks
+    </h2>
+
+    <p style="color:#666">
+    เปอร์เซ็นต์ด้านล่างเป็น normalized likelihood
+    ภายในโมเดลนี้
+    </p>
+
+  `;
+
+
+  const max=
+    Math.max(
+      ...data.map(x=>x.probability)
+    );
+
+
+  data.forEach((item,index)=>{
+
+    const barWidth=
+      (item.probability/max)*100;
+
+
+    html+=`
+
+    <div class="row">
+
+      <div class="rank">
+        #${index+1}
+      </div>
+
+      <div>
+
+        <div class="number">
+          ${item.display}
+        </div>
+
+        <div class="detail">
+          ${item.label}
+        </div>
+
+        <div class="bar-bg">
+
+          <div
+            class="bar"
+            style="width:${barWidth}%">
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="prob">
+        ${item.probability.toFixed(2)}%
+      </div>
+
+    </div>
+
+    `;
+
+  });
+
+
+  container.innerHTML=html;
+
+}
+
+
+updatePattern();
+
+</script>
+
+</body>
+</html>
