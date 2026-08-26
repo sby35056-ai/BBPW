@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10-Digit Number Probability</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f5f5f7;
+        color: #1d1d1f;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 50px auto;
+        padding: 25px;
+    }
+
+    .card {
+        background: white;
+        border-radius: 24px;
+        padding: 30px;
+        box-shadow: 0 10px 35px rgba(0,0,0,.08);
+    }
+
+    h1 {
+        margin-top: 0;
+    }
+
+    .pattern {
+        font-size: 34px;
+        font-weight: bold;
+        letter-spacing: 7px;
+        text-align: center;
+        margin: 30px 0;
+    }
+
+    .inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        font-size: 18px;
+    }
+
+    button {
+        margin-top: 18px;
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 12px;
+        background: black;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 25px;
+    }
+
+    .stat {
+        background: #f2f2f4;
+        padding: 18px;
+        border-radius: 15px;
+        text-align: center;
+    }
+
+    .stat strong {
+        display: block;
+        font-size: 22px;
+        margin-top: 5px;
+    }
+
+    .search {
+        margin-top: 25px;
+    }
+
+    .result {
+        margin-top: 15px;
+        max-height: 350px;
+        overflow: auto;
+        border: 1px solid #eee;
+        border-radius: 14px;
+    }
+
+    .number {
+        padding: 11px 15px;
+        border-bottom: 1px solid #eee;
+        font-family: monospace;
+        font-size: 18px;
+    }
+
+    @media (max-width: 650px) {
+        .inputs,
+        .stats {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<h1>🔢 10-Digit Number Probability</h1>
+
+<p>
+กรอกเลขหลักที่ 1 และเลข 4 หลักสุดท้าย
+เพื่อดูจำนวนชุดที่เป็นไปได้ของเลขตรงกลาง 5 หลัก
+</p>
+
+<div class="inputs">
+
+<div>
+<label>เลขหลักที่ 1</label>
+<input
+    id="first"
+    maxlength="1"
+    inputmode="numeric"
+    placeholder="เช่น 7"
+>
+</div>
+
+<div>
+<label>เลข 4 หลักสุดท้าย</label>
+<input
+    id="last"
+    maxlength="4"
+    inputmode="numeric"
+    placeholder="เช่น 1234"
+>
+</div>
+
+</div>
+
+<div id="pattern" class="pattern">
+_ _ _ _ _ _ _ _ _ _
+</div>
+
+<button onclick="calculate()">
+คำนวณความเป็นไปได้
+</button>
+
+<div class="stats">
+
+<div class="stat">
+เลขที่รู้แล้ว
+<strong>5</strong>
+หลัก
+</div>
+
+<div class="stat">
+เลขที่ไม่รู้
+<strong>5</strong>
+หลัก
+</div>
+
+<div class="stat">
+ความเป็นไปได้
+<strong>100,000</strong>
+ชุด
+</div>
+
+</div>
+
+<div class="stats">
+
+<div class="stat">
+โอกาสต่อ 1 ชุด
+<strong>1 / 100,000</strong>
+</div>
+
+<div class="stat">
+คิดเป็น
+<strong>0.001%</strong>
+</div>
+
+<div class="stat">
+ช่วงเลขกลาง
+<strong>00000–99999</strong>
+</div>
+
+</div>
+
+<div class="search">
+
+<h3>ทดลองเลขตรงกลาง</h3>
+
+<input
+    id="middle"
+    maxlength="5"
+    inputmode="numeric"
+    placeholder="กรอกเลขตรงกลาง 5 หลัก เช่น 54321"
+>
+
+<button onclick="checkNumber()">
+สร้างเลข 10 หลัก
+</button>
+
+<div id="answer"></div>
+
+</div>
+
+</div>
+</div>
+
+<script>
+
+const firstInput = document.getElementById("first");
+const lastInput = document.getElementById("last");
+
+[firstInput, lastInput].forEach(input => {
+
+    input.addEventListener("input", function () {
+
+        this.value =
+            this.value.replace(/\D/g, "");
+
+        updatePattern();
+
+    });
+
+});
+
+
+function updatePattern() {
+
+    const first =
+        firstInput.value || "_";
+
+    const lastRaw =
+        lastInput.value;
+
+    const last =
+        lastRaw
+        .padEnd(4, "_")
+        .split("");
+
+    document.getElementById("pattern").textContent =
+        [
+            first,
+            "_",
+            "_",
+            "_",
+            "_",
+            "_",
+            ...last
+        ].join(" ");
+
+}
+
+
+function calculate() {
+
+    const first =
+        firstInput.value;
+
+    const last =
+        lastInput.value;
+
+    if (
+        first.length !== 1 ||
+        last.length !== 4
+    ) {
+
+        alert(
+            "กรุณากรอกเลขหลักแรก 1 ตัว และเลขท้าย 4 ตัว"
+        );
+
+        return;
+    }
+
+    updatePattern();
+
+}
+
+
+function checkNumber() {
+
+    const first =
+        firstInput.value;
+
+    const last =
+        lastInput.value;
+
+    const middle =
+        document
+        .getElementById("middle")
+        .value
+        .replace(/\D/g, "");
+
+    if (
+        first.length !== 1 ||
+        last.length !== 4 ||
+        middle.length !== 5
+    ) {
+
+        document.getElementById("answer").innerHTML =
+            "<p>กรุณากรอกข้อมูลให้ครบค่ะ</p>";
+
+        return;
+
+    }
+
+    const fullNumber =
+        first + middle + last;
+
+    document.getElementById("answer").innerHTML = `
+        <div
+            style="
+            margin-top:15px;
+            background:#f2f2f4;
+            border-radius:14px;
+            padding:20px;
+            text-align:center;
+            "
+        >
+
+        <div>เลขชุดที่ได้</div>
+
+        <div
+            style="
+            font-size:30px;
+            font-weight:bold;
+            letter-spacing:4px;
+            margin:10px;
+            "
+        >
+        ${fullNumber}
+        </div>
+
+        <div>
+        ความน่าจะเป็นของชุดนี้ =
+        <b>1 / 100,000</b>
+        หรือ
+        <b>0.001%</b>
+        </div>
+
+        </div>
+    `;
+
+}
+
+updatePattern();
+
+</script>
+
+</body>
+</html>
