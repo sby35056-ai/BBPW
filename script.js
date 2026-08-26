@@ -127,18 +127,69 @@ function renderResults(last) {
 
         <div class="family-head">
 
-<div class="number">
-  ${family.prefix} + 0000–9999 + ${last}
-</div>
+mobileFamilies.forEach((family) => {
 
-<div class="details">
-  ช่วงหมายเลข:
-  <strong>
-    ${family.prefix}0000${last}
-    –
-    ${family.prefix}9999${last}
-  </strong>
-</div>
+  const familyShare =
+    candidatesPerFamily /
+    filteredCandidateCount *
+    100;
+
+  const firstCandidate =
+    `${family.prefix}0000${last}`;
+
+  const lastCandidate =
+    `${family.prefix}9999${last}`;
+
+  html += `
+    <div class="family">
+
+      <div class="family-head">
+
+        <div class="number">
+          ${family.prefix} + 0000–9999 + ${last}
+        </div>
+
+        <div class="badge">
+          ${candidatesPerFamily.toLocaleString()} candidates
+        </div>
+
+      </div>
+
+      <div class="details">
+
+        ${family.label}
+
+        <br><br>
+
+        ช่วงหมายเลขที่เข้าเงื่อนไข:
+
+        <br>
+
+        <strong>
+          ${firstCandidate}
+          –
+          ${lastCandidate}
+        </strong>
+
+        <br><br>
+
+        Candidate share:
+        <strong>
+          ${familyShare.toFixed(2)}%
+        </strong>
+
+      </div>
+
+      <div class="bar-bg">
+        <div
+          class="bar"
+          style="width:${familyShare}%"
+        ></div>
+      </div>
+
+    </div>
+  `;
+});
 
           <div class="badge">
             ${candidatesPerFamily.toLocaleString()} candidates
