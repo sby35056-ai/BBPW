@@ -127,9 +127,18 @@ function renderResults(last) {
 
         <div class="family-head">
 
-          <div class="number">
-            ${family.prefix}••••${last}
-          </div>
+<div class="number">
+  ${family.prefix} + 0000–9999 + ${last}
+</div>
+
+<div class="details">
+  ช่วงหมายเลข:
+  <strong>
+    ${family.prefix}0000${last}
+    –
+    ${family.prefix}9999${last}
+  </strong>
+</div>
 
           <div class="badge">
             ${candidatesPerFamily.toLocaleString()} candidates
